@@ -1,0 +1,12 @@
+{
+  "translations": {
+    "de": {
+      "room in use": "Raum ist belegt",
+      "room in use (with preheating)": "Raum ist belegt (mit Vorheizen)",
+      "roomID": "Raum-ID",
+      "Pre-heating": "Vorheizen",
+      "Treat requests as booked": "Auch Anfragen als belegt anzeigen",
+      "minutes": "Minuten"
+    }
+  }
+}

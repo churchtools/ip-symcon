@@ -1,0 +1,19 @@
+{
+  "id": "{24696BB4-BA33-42CA-86A4-67FD7E4AED89}",
+  "name": "CTRoomUsage",
+  "type": 3,
+  "vendor": "ChurchTools Innovations GmbH",
+  "aliases":
+  [
+    "ChurchTools Raumbelegung"
+  ],
+  "url": "https://church.tools",
+  "parentRequirements": [
+    "{CF773301-CB9C-4285-8A8D-D1B5288B9BDD}"
+  ],
+  "childRequirements": [],
+  "implemented": [
+    "{80F27E23-9209-411F-B531-AF913960759C}"
+  ],
+  "prefix": "CTR"
+}

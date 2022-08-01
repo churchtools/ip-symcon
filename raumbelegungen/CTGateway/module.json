@@ -1,0 +1,20 @@
+{
+  "id": "{726CCC58-96A5-4ECC-9597-65D0AFCD0E44}",
+  "name": "CTGateway",
+  "type":2,
+  "vendor": "ChurchTools Innovations GmbH",
+  "aliases":
+  [
+    "ChurchTools Gateway"
+  ],
+  "url": "https://church.tools",
+  "parentRequirements": [
+  ],
+  "childRequirements": [
+    "{80F27E23-9209-411F-B531-AF913960759C}"
+  ],
+  "implemented": [
+    "{CF773301-CB9C-4285-8A8D-D1B5288B9BDD}"
+  ],
+  "prefix": "CTG"
+}
