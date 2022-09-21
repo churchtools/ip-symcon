@@ -2,11 +2,16 @@
   "translations": {
     "de": {
       "room in use": "Raum ist belegt",
-      "room in use (with preheating)": "Raum ist belegt (mit Vorheizen)",
+      "heating": "Heizen",
       "roomID": "Raum-ID",
       "Pre-heating": "Vorheizen",
+      "Stop heating early": "Vorzeitiges Heiz-Ende",
       "Treat requests as booked": "Auch Anfragen als belegt anzeigen",
-      "minutes": "Minuten"
+      "minutes": "Minuten",
+      "Next booking title": "Nächste Buchung Titel",
+      "Next booking start date": "Nächste Buchung Start",
+      "Next booking end date": "Nächste Buchung Ende",
+      "Next booking status ID": "Nächste Buchung Status-ID"
     }
   }
 }

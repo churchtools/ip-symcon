@@ -12,9 +12,10 @@ class CTRoomUsage extends IPSModule {
         $this->RegisterPropertyInteger('roomID', 0); // Property: kann über die Einstellungen/Formular der Instanz gesetzt werden, wird auch für create verwendet
         $this->RegisterPropertyBoolean('treatRequestsAsBooked', false);
         $this->RegisterPropertyInteger('preheatingMinutes', 0);
+        $this->RegisterPropertyInteger('stopHeatingEarlyMinutes', 0);
 
-        $this->RegisterVariableBoolean('roomInUse', $this->Translate('Room in use')); // Variable: wird als Variable angezeigt und kann von außer abgerufen werden
-        $this->RegisterVariableBoolean('roomInUseWithPreheating', $this->Translate('Room in use (with preheating)'));
+        $this->RegisterVariableBoolean('roomInUse', $this->Translate('room in use')); // Variable: wird als Variable angezeigt und kann von außen abgerufen werden
+        $this->RegisterVariableBoolean('roomInUseWithPreheating', $this->Translate('heating'));
         $this->RegisterVariableString('nextBookingTitle', $this->Translate('Next booking title'));
         $this->RegisterVariableString('nextBookingStartDate', $this->Translate('Next booking start date'));
         $this->RegisterVariableString('nextBookingEndDate', $this->Translate('Next booking end date'));
@@ -87,6 +88,7 @@ class CTRoomUsage extends IPSModule {
             return;
         }
         $endDate = new DateTime($this->GetValue('nextBookingEndDate'));
+        $endDate = $endDate->sub(new DateInterval('PT' . $this->ReadPropertyInteger('stopHeatingEarlyMinutes') . 'M'));
         $now = new DateTime();
 
         if ($now > $endDate) {
@@ -127,7 +129,16 @@ class CTRoomUsage extends IPSModule {
                     'suffix' => 'minutes',
                     'minimum' => 0,
                     'maximum' => 1440
+                ],
+                [
+                    'type' => 'NumberSpinner',
+                    'name'=> 'stopHeatingEarlyMinutes',
+                    'caption' => 'Stop heating early',
+                    'suffix' => 'minutes',
+                    'minimum' => 0,
+                    'maximum' => 1440
                 ]
+
             ],
             'actions' => [
             ]
