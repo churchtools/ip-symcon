@@ -19,11 +19,13 @@ class CTRoomUsage extends IPSModule {
         $this->RegisterVariableString('nextBookingTitle', $this->Translate('Next booking title'));
         $this->RegisterVariableString('nextBookingStartDate', $this->Translate('Next booking start date'));
         $this->RegisterVariableString('nextBookingEndDate', $this->Translate('Next booking end date'));
-        $this->RegisterVariableInteger('nextBookingStatusId', $this->Translate('Next booking status ID'));
+        $this->RegisterVariableString('nextBookingStatus', $this->Translate('Next booking status'));
         $this->SetValue('roomInUse', false);
         $this->SetValue('roomInUseWithPreheating', false);
 
         $this->RegisterTimer("Update", 10000, 'CTR_UpdateUsage('. $this->InstanceID . ');');
+
+        $this->RegisterAttributeString('bookings', '[]');
     }
 
     // Überschreibt die intere IPS_ApplyChanges($id) Funktion
@@ -52,64 +54,84 @@ class CTRoomUsage extends IPSModule {
     public function ReceiveData($JSONString) {
         $data = json_decode($JSONString, true);
 
-        //Im Meldungsfenster zu Debug zwecken ausgeben
-        IPS_LogMessage('CTRoomUsage #' . $this->ReadPropertyInteger('roomID'), print_r($data, true));
-
         $data = $data['Buffer'];
 
-        if ($this->ReadPropertyBoolean('treatRequestsAsBooked') !== $data['includingRequests']) {
-            return; // ignore
-        }
-
-        if ($data['statusId'] != 0) {
-            $this->SetValue('nextBookingTitle', $data['caption']);
-            $this->SetValue('nextBookingStartDate', $data['startDate']);
-            $this->SetValue('nextBookingEndDate', $data['endDate']);
-            $this->SetValue('nextBookingStatusId', $data['statusId']);
-            $now = new DateTime();
-            $startDate = new DateTime($data['startDate']);
-            $preheatDate = new DateTime($data['startDate']);
-            $preheatDate = $preheatDate->sub(new DateInterval('PT' . $this->ReadPropertyInteger('preheatingMinutes') . 'M'));
-            $this->SetValue('roomInUse', ($now >= $startDate));
-            $this->SetValue('roomInUseWithPreheating', ($now >= $preheatDate));
-            $this->SetValue('nextBookingStatusId', $data['statusId']);
-        } else {
-            $this->SetValue('nextBookingStatusId', 0);
-            $this->SetValue('nextBookingTitle', '');
-            $this->SetValue('nextBookingStartDate', '');
-            $this->SetValue('nextBookingEndDate', '');
-            $this->SetValue('roomInUse', false);
-            $this->SetValue('roomInUseWithPreheating', false);
-        }
-    }
+        $this->WriteAttributeString('bookings', json_encode($data));
+        $this->UpdateUsage();
+     }
 
     public function UpdateUsage() {
-        if ($this->GetValue('nextBookingStatusId') === 0) {
-            return;
-        }
-        $endDate = new DateTime($this->GetValue('nextBookingEndDate'));
-        $endDate = $endDate->sub(new DateInterval('PT' . $this->ReadPropertyInteger('stopHeatingEarlyMinutes') . 'M'));
-        $now = new DateTime();
 
-        if ($now > $endDate) {
-            $this->SetValue('nextBookingStatusId', 0);
+        $bookings = json_decode($this->ReadAttributeString('bookings'), true);
+
+        $nextBooking = null;
+        $roomInUse = false;
+        $roomInUseWithPreheating = false;
+        $now = new DateTime();
+        $includingRequests = $this->ReadPropertyBoolean('treatRequestsAsBooked');
+
+        foreach (array_reverse($bookings) as $booking) {
+            if (($booking['statusId'] != 0) && ($includingRequests || ($booking['statusId'] == 2))) {
+                $startDate = new DateTime($booking['startDate']);
+                $preheatDate = new DateTime($booking['startDate']);
+                $preheatDate = $preheatDate->sub(new DateInterval('PT' . $this->ReadPropertyInteger('preheatingMinutes') . 'M'));
+                $endDate = new DateTime($booking['endDate']);
+                $stopHeatingDate = new DateTime($booking['endDate']);
+                $stopHeatingDate = $stopHeatingDate->sub(new DateInterval('PT' . $this->ReadPropertyInteger('stopHeatingEarlyMinutes') . 'M'));
+                if ($now < $stopHeatingDate) {
+                    $nextBooking = $booking;
+                }
+                if (($now >= $startDate) && ($now < $endDate)) {
+                    $roomInUse = true;
+                }
+                if (($now >= $preheatDate) && ($now < $stopHeatingDate)) {
+                    $roomInUseWithPreheating = true;
+                }
+            }
+        }
+        if ($nextBooking !== null) {
+            $startDate = new DateTime($nextBooking['startDate']);
+            $startDateFormatted = date($this->Translate('Y-m-d H:i:s'), $startDate->format('U'));
+            $endDate = new DateTime($nextBooking['endDate']);
+            $endDateFormatted = date($this->Translate('Y-m-d H:i:s'), $endDate->format('U'));
+            $this->SetValue('nextBookingTitle', $nextBooking['caption']);
+            $this->SetValue('nextBookingStartDate', $startDateFormatted);
+            $this->SetValue('nextBookingEndDate', $endDateFormatted);
+            $this->SetValue('nextBookingStatus', ($nextBooking['statusId'] == 2 ? $this->Translate('approved') : $this->Translate('requested')));
+        } else {
+            $this->SetValue('nextBookingStatus', '');
             $this->SetValue('nextBookingTitle', '');
             $this->SetValue('nextBookingStartDate', '');
             $this->SetValue('nextBookingEndDate', '');
-            $this->SetValue('roomInUse', false);
-            $this->SetValue('roomInUseWithPreheating', false);
-            return;
         }
-
-        $startDate = new DateTime($this->GetValue('nextBookingStartDate'));
-        $preheatDate = new DateTime($this->GetValue('nextBookingStartDate'));
-        $preheatDate = $preheatDate->sub(new DateInterval('PT' . $this->ReadPropertyInteger('preheatingMinutes') . 'M'));
-        $this->SetValue('roomInUse', ($now >= $startDate));
-        $this->SetValue('roomInUseWithPreheating', ($now >= $preheatDate));
+        $this->SetValue('roomInUse', $roomInUse);
+        $this->SetValue('roomInUseWithPreheating', $roomInUseWithPreheating);
     }
 
     public function GetConfigurationForm()
     {
+        $bookings = json_decode($this->ReadAttributeString('bookings'), true);
+        $includingRequests = $this->ReadPropertyBoolean('treatRequestsAsBooked');
+        $listValues = [];
+        foreach ($bookings as $booking) {
+            if (($booking['statusId'] != 0) && ($includingRequests || ($booking['statusId'] == 2))) {
+                $startDate = new DateTime($booking['startDate']);
+                $preheatDate = new DateTime($booking['startDate']);
+                $preheatDate = $preheatDate->sub(new DateInterval('PT' . $this->ReadPropertyInteger('preheatingMinutes') . 'M'));
+                $endDate = new DateTime($booking['endDate']);
+                $stopHeatingDate = new DateTime($booking['endDate']);
+                $stopHeatingDate = $stopHeatingDate->sub(new DateInterval('PT' . $this->ReadPropertyInteger('stopHeatingEarlyMinutes') . 'M'));
+                $listValues[] = [
+                    'startDate' => date($this->Translate('Y-m-d H:i:s'), $startDate->format('U')),
+                    'endDate' => date($this->Translate('Y-m-d H:i:s'), $endDate->format('U')),
+                    'name' => $booking['caption'],
+                    'state' => ($booking['statusId'] == 2 ? $this->Translate('approved') : $this->Translate('requested')),
+                    'heatingStart' => date($this->Translate('Y-m-d H:i:s'), $preheatDate->format('U')),
+                    'heatingEnd' => date($this->Translate('Y-m-d H:i:s'), $stopHeatingDate->format('U'))
+                ];
+            }
+        }
+
         $jsonForm = [
             'elements' => [
                 [
@@ -141,6 +163,45 @@ class CTRoomUsage extends IPSModule {
 
             ],
             'actions' => [
+                [
+                    'type' => 'List',
+                    'name' => 'bookings',
+                    'caption' => 'Aktuelle Buchungen',
+                    'rowCount' => 5,
+                    'columns' => [
+                        [
+                            'caption' => 'Start',
+                            'name' => 'startDate',
+                            'width' => '150px'
+                        ],
+                        [
+                            'caption' => 'End',
+                            'name' => 'endDate',
+                            'width' => '150px'
+                        ],
+                        [
+                            'caption' => 'Name',
+                            'name' => 'name',
+                            'width' => 'auto'
+                        ],
+                        [
+                            'caption' => 'State',
+                            'name' => 'state',
+                            'width' => '100px'
+                        ],
+                        [
+                            'caption' => 'Heating start',
+                            'name' => 'heatingStart',
+                            'width' => '150px'
+                        ],
+                        [
+                            'caption' => 'Heating end',
+                            'name' => 'heatingEnd',
+                            'width' => '150px'
+                        ]
+                    ],
+                    'values' => $listValues
+                ]
             ]
         ];
         return json_encode($jsonForm);

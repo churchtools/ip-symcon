@@ -48,7 +48,6 @@ class CTGateway extends IPSModule {
             curl_setopt($ch, CURLOPT_TIMEOUT, 20); //timeout in seconds
             $data = curl_exec($ch);
             if (curl_errno($ch)) { // curl Fehler aufgetreten
-                echo curl_error($ch);
                 $error = true;
             }
             curl_close($ch);
@@ -222,29 +221,14 @@ class CTGateway extends IPSModule {
             return;
         }
 
-        IPS_LogMessage("CTGateway", 'Fetching room usage...');
+        //$this->LogMessage("CTGateway - fetching room usage...", KL_DEBUG);
 
         $resourceIds = [];
-        $bookingForResource = [];
+        $bookingsForResource = [];
         foreach (IPS_GetInstanceListByModuleID('{24696BB4-BA33-42CA-86A4-67FD7E4AED89}') as $instanceID) {
             $roomID = IPS_GetProperty($instanceID, 'roomID');
             $resourceIds[] = 'resource_ids%5B%5D=' . $roomID;
-            $bookingForResource['Booking' . $roomID] = [
-                'resourceId' => $roomID,
-                'caption' => '',
-                'statusId' => 0,
-                'includingRequests' => false,
-                'startDate' => '',
-                'endDate' => '',
-            ];
-            $bookingForResource['BookingOrRequest' . $roomID] = [
-                'resourceId' => $roomID,
-                'caption' => '',
-                'statusId' => 0,
-                'includingRequests' => true,
-                'startDate' => '',
-                'endDate' => '',
-            ];
+            $bookingsForResource[$roomID] = [];
         }
 
         if (count($resourceIds) === 0) {
@@ -255,6 +239,7 @@ class CTGateway extends IPSModule {
         $tomorrow = new DateTime('now +1 day');
         $toDate = $tomorrow->format('Y-m-d');
 
+        // we only request status ID 1 and 2 (requested or approved) here
         $url = $this->ReadPropertyString('ctUrl') . '/api/bookings?' .
             join('&', $resourceIds) . '&from=' . $fromDate . '&to=' . $toDate .
             '&status_ids%5B%5D=1&status_ids%5B%5D=2&login_token=' . $this->ReadPropertyString('ctToken');
@@ -280,45 +265,19 @@ class CTGateway extends IPSModule {
                     if ($booking['base']['allDay'] == true) {
                         $endDate->add(new DateInterval('P1D'));
                     }
-                    $now = new DateTime();
-
-                    // we send both: the first booking - and the first booking OR request.
-                    // Then the CTRoomUsage can decide what to use
-                    $currentBooking = $bookingForResource['Booking' . $resourceId];
-                    if (($booking['base']['statusId'] === 2) && ($endDate > $now) && (
-                            ($currentBooking['startDate'] == '') ||
-                            ($startDate < new DateTime($currentBooking['startDate']))
-                        )) {
-                        $bookingForResource['Booking' . $resourceId] = [
-                            'resourceId' => $resourceId,
-                            'caption' => $booking['base']['caption'],
-                            'includingRequests' => false,
-                            'statusId' => $booking['base']['statusId'],
-                            'startDate' => gmdate('Y-m-d\TH:i:s\Z', $startDate->format('U')),
-                            'endDate' => gmdate('Y-m-d\TH:i:s\Z', $endDate->format('U')),
-                        ];
-                    }
-                    $currentBookingOrRequest = $bookingForResource['BookingOrRequest' . $resourceId];
-                    if (($endDate > $now) && (
-                            ($currentBookingOrRequest['startDate'] == '') ||
-                            ($startDate < new DateTime($currentBookingOrRequest['startDate']))
-                        )) {
-                        $bookingForResource['BookingOrRequest' . $resourceId] = [
-                            'resourceId' => $resourceId,
-                            'caption' => $booking['base']['caption'],
-                            'includingRequests' => true,
-                            'statusId' => $booking['base']['statusId'],
-                            'startDate' => gmdate('Y-m-d\TH:i:s\Z', $startDate->format('U')),
-                            'endDate' => gmdate('Y-m-d\TH:i:s\Z', $endDate->format('U')),
-                        ];
-                    }
+                    $bookingsForResource[$resourceId][] = [
+                        'resourceId' => $resourceId,
+                        'caption' => $booking['base']['caption'],
+                        'statusId' => $booking['base']['statusId'],
+                        'startDate' => gmdate('Y-m-d\TH:i:s\Z', $startDate->format('U')),
+                        'endDate' => gmdate('Y-m-d\TH:i:s\Z', $endDate->format('U')),
+                    ];
                 }
-                foreach ($bookingForResource as $res => $booking) {
+                foreach ($bookingsForResource as $res => $bookings) {
                     $json = json_encode([
                         'DataID' => "{80F27E23-9209-411F-B531-AF913960759C}",
-                        'Buffer' => $booking
+                        'Buffer' => $bookings
                     ]);
-                    IPS_LogMessage("CTGateway", print_r($json, true));
                     $this->SendDataToChildren($json);
                 }
                 $updateTime = time();

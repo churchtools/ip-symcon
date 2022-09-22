@@ -6,7 +6,8 @@
       "Location": "Ort",
       "Update bookings now": "Raumbelegung aktualisieren",
       "New room bookings are automatically fetched every 10 minutes. You can force fetching with the button below.": "Neue Raumbelegungen werden automatisch alle 10 Minuten abgerufen. Sie können jederzeit das Abrufen der Buchungen über den Button unten erzwingen.",
-      "Last updated": "Letzte Aktualisierung"
+      "Last updated": "Letzte Aktualisierung",
+      "Incomplete or wrong URL/token": "URL oder Token ist falsch oder unvollständig"
     }
   }
 }

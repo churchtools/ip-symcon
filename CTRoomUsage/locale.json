@@ -11,7 +11,14 @@
       "Next booking title": "Nächste Buchung Titel",
       "Next booking start date": "Nächste Buchung Start",
       "Next booking end date": "Nächste Buchung Ende",
-      "Next booking status ID": "Nächste Buchung Status-ID"
+      "Next booking status": "Nächste Buchung Status",
+      "approved": "bestätigt",
+      "requested": "angefragt",
+      "State": "Status",
+      "End": "Ende",
+      "Heating start": "Heiz-Start",
+      "Heating end": "Heiz-Ende",
+      "Y-m-d H:i:s": "d.m.Y H:i:s"
     }
   }
 }
