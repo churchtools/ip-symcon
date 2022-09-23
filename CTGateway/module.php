@@ -73,6 +73,7 @@ class CTGateway extends IPSModule {
                 }
                 $masterData = json_decode($data, true);
             } catch (Exception $exception) {
+                $this->LogMessage('Error: ' . json_encode($exception), KL_ERROR);
                 $masterData = [];
             }
 
@@ -127,17 +128,20 @@ class CTGateway extends IPSModule {
         }
 
         foreach (IPS_GetInstanceListByModuleID('{24696BB4-BA33-42CA-86A4-67FD7E4AED89}') as $instanceID) {
-            $roomID = IPS_GetProperty($instanceID, 'roomID');
-            if (isset($roomIDToIndex[''.$roomID])) {
-                $availableDevices[$roomIDToIndex[$roomID]]['instanceID'] = $instanceID;
-                $availableDevices[$roomIDToIndex[$roomID]]['name'] = IPS_GetName($instanceID) .
-                    ($roomIDToName[$roomID] !== IPS_GetName($instanceID) ? ' (in CT: ' . $roomIDToName[$roomID] . ')' : '');
-            } else {
-                $availableDevices[] = [
-                    'name' => IPS_GetName($instanceID),
-                    'roomID' => $roomID,
-                    'instanceID' => $instanceID
-                ];
+            $instance = IPS_GetInstance($instanceID);
+            if (isset($instance['ConnectionID']) && $instance['ConnectionID'] == $this->InstanceID) {
+                $roomID = IPS_GetProperty($instanceID, 'roomID');
+                if (isset($roomIDToIndex['' . $roomID])) {
+                    $availableDevices[$roomIDToIndex[$roomID]]['instanceID'] = $instanceID;
+                    $availableDevices[$roomIDToIndex[$roomID]]['name'] = IPS_GetName($instanceID) .
+                        ($roomIDToName[$roomID] !== IPS_GetName($instanceID) ? ' (in CT: ' . $roomIDToName[$roomID] . ')' : '');
+                } else {
+                    $availableDevices[] = [
+                        'name' => IPS_GetName($instanceID),
+                        'roomID' => $roomID,
+                        'instanceID' => $instanceID
+                    ];
+                }
             }
         }
         $values = $availableDevices;
@@ -226,9 +230,12 @@ class CTGateway extends IPSModule {
         $resourceIds = [];
         $bookingsForResource = [];
         foreach (IPS_GetInstanceListByModuleID('{24696BB4-BA33-42CA-86A4-67FD7E4AED89}') as $instanceID) {
-            $roomID = IPS_GetProperty($instanceID, 'roomID');
-            $resourceIds[] = 'resource_ids%5B%5D=' . $roomID;
-            $bookingsForResource[$roomID] = [];
+            $instance = IPS_GetInstance($instanceID);
+            if (isset($instance['ConnectionID']) && $instance['ConnectionID'] == $this->InstanceID) {
+                $roomID = IPS_GetProperty($instanceID, 'roomID');
+                $resourceIds[] = 'resource_ids%5B%5D=' . $roomID;
+                $bookingsForResource[$roomID] = [];
+            }
         }
 
         if (count($resourceIds) === 0) {
@@ -251,6 +258,7 @@ class CTGateway extends IPSModule {
             }
             $result = json_decode($data, true);
         } catch (Exception $exception) {
+            $this->LogMessage('Error: ' . json_encode($exception), KL_ERROR);
             $result = [];
         }
 
