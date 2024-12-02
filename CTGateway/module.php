@@ -235,6 +235,13 @@ class CTGateway extends IPSModule {
                 $roomID = IPS_GetProperty($instanceID, 'roomID');
                 $resourceIds[] = 'resource_ids%5B%5D=' . $roomID;
                 $bookingsForResource[$roomID] = [];
+                $bookingsForResource[$roomID][] = [
+                    'resourceId' => $roomID,
+                    'caption' => '',
+                    'statusId' => '',
+                    'startDate' => '',
+                    'endDate' => '',
+                ];
             }
         }
 
