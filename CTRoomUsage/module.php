@@ -34,7 +34,7 @@ class CTRoomUsage extends IPSModule {
         // Diese Zeile nicht löschen
         parent::ApplyChanges();
 
-        $this->SetReceiveDataFilter('.*"resourceId":' . $this->ReadPropertyInteger('roomID') . ',.*');
+        $this->SetReceiveDataFilter('.*"resourceId":' . $this->ReadPropertyInteger('roomID') . ',.*|^$');
         $this->UpdateUsage();
     }
 
@@ -51,14 +51,22 @@ class CTRoomUsage extends IPSModule {
     }
 
     // Empfangene Daten vom Parent (RX Paket) vom Typ Simpel
-    public function ReceiveData($JSONString) {
-        $data = json_decode($JSONString, true);
+    public function ReceiveData($JSONString)
+    {
+    $data = json_decode($JSONString, true);
+        
+    // Überprüfen, ob die empfangenen Daten leer sind
+    if (empty($data['Buffer'])) {
+        // Wenn ja, gespeicherte Buchungen zurücksetzen
+        $this->WriteAttributeString('bookings', '[]');
+    } else {
+        // Ansonsten die empfangenen Buchungen speichern
+        $this->WriteAttributeString('bookings', json_encode($data['Buffer']));
+    }
 
-        $data = $data['Buffer'];
-
-        $this->WriteAttributeString('bookings', json_encode($data));
-        $this->UpdateUsage();
-     }
+    // Nutzung aktualisieren
+    $this->UpdateUsage();
+    }
 
     public function UpdateUsage() {
 
