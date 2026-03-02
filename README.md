@@ -53,6 +53,9 @@ Die Buchungen der Räume in ChurchTools werden automatisch vom Gateway alle 10 M
 Die Raumbelegungs-Variablen für die einzelnen Räume werden basierend auf den gespeicherten Buchungsdaten alle 10 Sekunden aktualisiert.
 
 ## Historie
+### Version 1.1
+Gelöschte Buchungen werden nun korrekt in Symcon berücksichtigt und die Buchung zurückgesetzt / aktualisiert. 
+
 ### Version 1.0
 * Initiale Version
 
