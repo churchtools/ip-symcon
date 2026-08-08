@@ -5,6 +5,7 @@
       "heating": "Heizen",
       "roomID": "Raum-ID",
       "Pre-heating": "Vorheizen",
+      "Pre-heating (fixed / fallback)": "Vorheizen (fest / Fallback)",
       "Stop heating early": "Vorzeitiges Heiz-Ende",
       "Treat requests as booked": "Auch Anfragen als belegt anzeigen",
       "minutes": "Minuten",
@@ -18,7 +19,24 @@
       "End": "Ende",
       "Heating start": "Heiz-Start",
       "Heating end": "Heiz-Ende",
-      "Y-m-d H:i:s": "d.m.Y H:i:s"
+      "Y-m-d H:i:s": "d.m.Y H:i:s",
+      "Dynamic pre-heating (minutes)": "Dynamischer Vorlauf (Minuten)",
+      "Intelligent pre-heating ramp": "Intelligente Heizrampe",
+      "When enabled, the pre-heating lead time is calculated from inside/outside temperature so the room reaches the target temperature right at booking start. When disabled (or sensors invalid), the fixed value above is used.": "Wenn aktiv, wird der Heiz-Vorlauf aus Innen-/Außentemperatur berechnet, sodass der Raum genau zum Buchungsstart die Zieltemperatur erreicht. Ist die Rampe aus (oder sind die Sensoren ungültig), gilt der feste Wert oben.",
+      "Enable intelligent ramp": "Intelligente Rampe aktivieren",
+      "Inside temperature variable": "Variable Raum-Ist-Temperatur",
+      "Outside temperature variable": "Variable Außentemperatur",
+      "Target temperature": "Zieltemperatur",
+      "Minimum pre-heating": "Minimaler Vorlauf",
+      "Maximum pre-heating": "Maximaler Vorlauf",
+      "Self-learning (calibrate rate from measured heat-up times)": "Selbstlernen (Heizrate aus gemessenen Aufheizzeiten kalibrieren)",
+      "Learned heating rate: %s °C/min · sensitivity: %s · samples: %d": "Gelernte Heizrate: %s °C/min · Empfindlichkeit: %s · Messungen: %d",
+      "Learning history": "Lernverlauf",
+      "Finished": "Fertig",
+      "Outside": "Außen",
+      "Inside at start": "Innen bei Start",
+      "Predicted": "Prognose",
+      "Measured": "Gemessen"
     }
   }
 }
