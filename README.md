@@ -50,6 +50,10 @@ Pro Raum kann ein Heiz-Vorlauf sowie ein vorzeitiges Heiz-Ende konfiguriert werd
 ### Intelligente Heizrampe (optional)
 Statt eines festen Heiz-Vorlaufs kann pro Raum eine **intelligente, selbstlernende Rampe** aktiviert werden. Der Vorlauf verschiebt sich dann automatisch **nach vorn** (früherer Heizstart, wenn es kalt ist bzw. der Raum noch kühl ist) oder **nach hinten** (späterer Heizstart, wenn es mild ist bzw. der Raum schon warm ist), sodass der Raum möglichst genau zum Buchungsstart die Zieltemperatur erreicht.
 
+![Die Rampe verschiebt sich je nach Bedingungen](docs/rampe-verschiebung.svg)
+
+> 💡 **Interaktiv ausprobieren:** [`docs/heizrampe.html`](docs/heizrampe.html) im Browser öffnen – mit Schiebereglern für Innen-/Außen-/Zieltemperatur, die live zeigen, wie sich der Vorlauf und der Heizstart verschieben.
+
 Berechnung:
 
 ```
@@ -60,6 +64,10 @@ Heizrate(Außentemperatur) = Heizrate_ref − Empfindlichkeit · (Referenz_Auße
 Das Ergebnis wird auf einen einstellbaren Bereich (minimaler/maximaler Vorlauf) begrenzt.
 
 **Selbstlernend:** Bei jeder Buchung misst das Modul die tatsächliche Aufheizzeit (Zeit vom Heizstart bis zum Erreichen der Zieltemperatur) und korrigiert damit die Heizrate über einen gleitenden Mittelwert. So wird die Rampe mit jeder Nutzung genauer. Die letzten Aufheiz-Vorgänge sowie die aktuell gelernte Heizrate werden im Konfigurationsdialog unter „Lernverlauf" angezeigt.
+
+![Datenfluss und Selbstlernen](docs/datenfluss-lernschleife.svg)
+
+![Selbstkorrektur der Heizrate](docs/selbstkorrektur.svg)
 
 **Voraussetzungen:** Innen- und Außentemperatur müssen als IP-Symcon-Variablen vorliegen (z.B. angebunden über Modbus / Technische Alternative oder ein Wettermodul) und im Einstellungsdialog ausgewählt werden.
 
