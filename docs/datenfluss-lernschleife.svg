@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 340" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="Datenfluss von den Temperatur-Sensoren über die Vorlaufberechnung zur Heizen-Variable, mit selbstlernender Rückkopplungsschleife">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5c6675"/></marker>
+    <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8621d"/></marker>
+  </defs>
+  <rect x="0" y="0" width="900" height="340" rx="14" fill="#ffffff" stroke="#d9dee6"/>
+  <text x="30" y="38" font-size="18" font-weight="700" fill="#1a1f29">Datenfluss &amp; Selbstlernen</text>
+  <text x="30" y="59" font-size="13" fill="#5c6675">Jede Buchung ist ein Lern-Datenpunkt: die echte Aufheizzeit korrigiert die Heizrate.</text>
+
+  <!-- inputs -->
+  <g font-size="13" text-anchor="middle">
+    <rect x="30" y="90" width="160" height="38" rx="8" fill="#ffffff" stroke="#2f7de1"/>
+    <text x="110" y="114" fill="#2f7de1">T_innen · T_außen</text>
+    <rect x="30" y="140" width="160" height="38" rx="8" fill="#ffffff" stroke="#5c6675"/>
+    <text x="110" y="164" fill="#1a1f29">Zieltemperatur</text>
+    <rect x="30" y="190" width="160" height="38" rx="8" fill="#ffffff" stroke="#e8621d"/>
+    <text x="110" y="214" fill="#e8621d">Modell: Rate, k</text>
+
+    <!-- compute -->
+    <rect x="300" y="128" width="190" height="62" rx="10" fill="#eef1f5" stroke="#d9dee6"/>
+    <text x="395" y="154" fill="#1a1f29" font-weight="600">Vorlauf berechnen</text>
+    <text x="395" y="174" font-size="11" fill="#5c6675">+ clampen / Fallback</text>
+
+    <!-- output -->
+    <rect x="600" y="128" width="180" height="62" rx="10" fill="#ffffff" stroke="#1f9d55"/>
+    <text x="690" y="154" fill="#1f9d55" font-weight="600">Variable „Heizen"</text>
+    <text x="690" y="174" font-size="11" fill="#5c6675">Start − Vorlauf</text>
+
+    <!-- learning row -->
+    <rect x="600" y="258" width="180" height="60" rx="10" fill="#ffffff" stroke="#e8621d"/>
+    <text x="690" y="283" fill="#e8621d" font-weight="600">Aufheizzeit messen</text>
+    <text x="690" y="302" font-size="11" fill="#5c6675">T_innen ≥ Ziel?</text>
+
+    <rect x="300" y="258" width="190" height="60" rx="10" fill="#ffffff" stroke="#e8621d"/>
+    <text x="395" y="283" fill="#e8621d" font-weight="600">Modell korrigieren</text>
+    <text x="395" y="302" font-size="11" fill="#5c6675">gleitender Mittelwert</text>
+  </g>
+
+  <!-- input arrows -->
+  <g stroke="#5c6675" stroke-width="1.6" fill="none">
+    <path d="M190,109 C240,109 250,150 298,152" marker-end="url(#a)"/>
+    <path d="M190,159 L298,159" marker-end="url(#a)"/>
+    <path d="M190,209 C240,209 250,172 298,166" marker-end="url(#a)"/>
+    <path d="M490,159 L598,159" marker-end="url(#a)"/>
+  </g>
+  <!-- learning loop (orange) -->
+  <g stroke="#e8621d" stroke-width="1.8" fill="none">
+    <path d="M690,190 L690,256" marker-end="url(#ao)"/>
+    <path d="M598,288 L492,288" marker-end="url(#ao)"/>
+    <path d="M395,256 L395,192" marker-end="url(#ao)"/>
+  </g>
+  <text x="705" y="228" font-size="11" fill="#e8621d">nach jeder Buchung</text>
+</svg>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 300" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="Zeitstrahl: die adaptive Rampe verschiebt den Heizstart je nach Bedingungen nach vorn oder hinten, im Vergleich zum festen Vorlauf">
+  <rect x="0" y="0" width="900" height="300" rx="14" fill="#ffffff" stroke="#d9dee6"/>
+  <text x="30" y="40" font-size="18" font-weight="700" fill="#1a1f29">Die Rampe verschiebt sich je nach Bedingungen</text>
+  <text x="30" y="62" font-size="13" fill="#5c6675">Ziel: der Raum ist genau zum Buchungsstart warm.</text>
+
+  <!-- booking start line -->
+  <line x1="800" y1="80" x2="800" y2="250" stroke="#1f9d55" stroke-width="2.5"/>
+  <text x="795" y="96" font-size="12" font-weight="700" fill="#1f9d55" text-anchor="end">Buchungsstart · Raum warm</text>
+
+  <!-- axis -->
+  <line x1="60" y1="250" x2="820" y2="250" stroke="#c9d1dc" stroke-width="2"/>
+  <text x="60" y="278" font-size="12" fill="#5c6675">früher</text>
+  <text x="820" y="278" font-size="12" fill="#5c6675" text-anchor="end">Zeit →</text>
+
+  <!-- fixed ramp (dashed) -->
+  <rect x="520" y="104" width="280" height="16" rx="5" fill="#e8ecf2" stroke="#8a94a3" stroke-dasharray="6 4"/>
+  <text x="512" y="116" font-size="12" fill="#5c6675" text-anchor="end">heute fest (60 min)</text>
+
+  <!-- cold ramp -->
+  <rect x="150" y="140" width="650" height="26" rx="6" fill="#f3a15e" stroke="#e8621d" stroke-width="2"/>
+  <circle cx="150" cy="153" r="6" fill="#e8621d"/>
+  <text x="815" y="158" font-size="12" font-weight="700" fill="#e8621d">kalt −8°C</text>
+  <text x="160" y="132" font-size="12" fill="#e8621d">langer Vorlauf → Rampe NACH VORN</text>
+
+  <!-- mild ramp -->
+  <rect x="620" y="188" width="180" height="26" rx="6" fill="#f7c39a" stroke="#e8621d" stroke-width="2"/>
+  <circle cx="620" cy="201" r="6" fill="#e8621d"/>
+  <text x="815" y="206" font-size="12" font-weight="700" fill="#2f7de1">mild +15°C</text>
+  <text x="612" y="180" font-size="12" fill="#2f7de1" text-anchor="end">kurzer Vorlauf → Rampe NACH HINTEN</text>
+</svg>
