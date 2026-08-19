@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intelligente Heizrampe – Konzept</title>
+<style>
+  html, body { background: #f6f7f9; }
+  @media (prefers-color-scheme: dark){ html, body { background: #0f1319; } }
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --surface-2: #eef1f5;
+    --border: #d9dee6;
+    --text: #1a1f29;
+    --muted: #5c6675;
+    --accent: #e8621d;      /* Rampe / Wärme */
+    --cool: #2f7de1;        /* kühl / außen */
+    --track: #c9d1dc;
+    --warm-fill: #f3a15e;
+    --grid: #e4e8ee;
+    --good: #1f9d55;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --bg: #0f1319;
+      --surface: #171c24;
+      --surface-2: #1f2732;
+      --border: #2b3543;
+      --text: #e8ecf2;
+      --muted: #9aa6b6;
+      --accent: #ff7a3c;
+      --cool: #5aa2f5;
+      --track: #313c4c;
+      --warm-fill: #a85a28;
+      --grid: #232c38;
+      --good: #35c07a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1319;
+    --surface: #171c24;
+    --surface-2: #1f2732;
+    --border: #2b3543;
+    --text: #e8ecf2;
+    --muted: #9aa6b6;
+    --accent: #ff7a3c;
+    --cool: #5aa2f5;
+    --track: #313c4c;
+    --warm-fill: #a85a28;
+    --grid: #232c38;
+    --good: #35c07a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 32px 20px 80px; }
+  header h1 { font-size: clamp(1.5rem, 4vw, 2.1rem); margin: 0 0 6px; letter-spacing: -0.02em; }
+  header p.sub { color: var(--muted); margin: 0 0 28px; font-size: 1.02rem; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 22px 24px;
+    margin: 0 0 22px;
+  }
+  .card h2 { font-size: 1.12rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .card p.hint { color: var(--muted); margin: 0 0 18px; font-size: 0.92rem; }
+
+  /* controls */
+  .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+  @media (max-width: 640px){ .controls { grid-template-columns: 1fr; } }
+  .ctl label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; }
+  .ctl label .val { font-variant-numeric: tabular-nums; font-size: 1.05rem; }
+  .ctl .val.cool { color: var(--cool); }
+  .ctl .val.warm { color: var(--accent); }
+  input[type=range]{ width: 100%; accent-color: var(--accent); height: 24px; }
+  input[type=range].cool { accent-color: var(--cool); }
+
+  /* readout */
+  .readout { display: flex; flex-wrap: wrap; gap: 14px; margin: 20px 0 4px; }
+  .stat { background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px; padding: 12px 16px; flex: 1 1 150px; }
+  .stat .k { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat .v { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .stat .v small { font-size: 0.85rem; font-weight: 500; color: var(--muted); }
+  .stat.hero .v { color: var(--accent); }
+
+  figure { margin: 0; }
+  figcaption { color: var(--muted); font-size: 0.86rem; margin-top: 10px; }
+  svg { max-width: 100%; height: auto; display: block; }
+
+  .formula {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px;
+    padding: 14px 18px; font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.92rem; overflow-x: auto; color: var(--text);
+  }
+  .formula .c { color: var(--muted); }
+  .badge { display:inline-block; padding:2px 9px; border-radius:999px; font-size:0.76rem; font-weight:600; }
+  .badge.vor { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+  .badge.hin { background: color-mix(in srgb, var(--cool) 20%, transparent); color: var(--cool); }
+  ul.steps { margin: 6px 0 0; padding-left: 20px; }
+  ul.steps li { margin-bottom: 6px; }
+  .foot { color: var(--muted); font-size: 0.82rem; text-align:center; margin-top: 30px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Intelligente Heizrampe</h1>
+    <p class="sub">Der Heiz-Vorlauf verschiebt sich automatisch <strong>nach vorn</strong> (bei Kälte) oder <strong>nach hinten</strong> (bei Wärme) – berechnet aus Innen-/Außentemperatur und einer selbstlernenden Heizrate.</p>
+  </header>
+
+  <div class="card">
+    <h2>Spiel damit: verschiebe die Rampe</h2>
+    <p class="hint">Regler bewegen → der Vorlauf und der Heizstart passen sich sofort an. Buchungsstart ist fix rechts; der Raum soll dann genau warm sein.</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label for="out">Außentemperatur <span class="val cool" id="outV">-5 °C</span></label>
+        <input type="range" class="cool" id="out" min="-15" max="30" value="-5" step="1">
+      </div>
+      <div class="ctl">
+        <label for="in">Raum-Ist (innen) <span class="val cool" id="inV">12 °C</span></label>
+        <input type="range" class="cool" id="in" min="5" max="24" value="12" step="1">
+      </div>
+      <div class="ctl">
+        <label for="tgt">Zieltemperatur <span class="val warm" id="tgtV">21 °C</span></label>
+        <input type="range" id="tgt" min="16" max="26" value="21" step="1">
+      </div>
+    </div>
+
+    <div class="readout">
+      <div class="stat hero">
+        <div class="k">Vorlauf (adaptiv)</div>
+        <div class="v" id="preheat">–</div>
+      </div>
+      <div class="stat">
+        <div class="k">Heizrate bei Wetter</div>
+        <div class="v" id="rate">–</div>
+      </div>
+      <div class="stat">
+        <div class="k">Richtung vs. Festwert</div>
+        <div class="v" id="dir">–</div>
+      </div>
+    </div>
+
+    <figure>
+      <svg id="timeline" viewBox="0 0 900 220" role="img" aria-label="Zeitstrahl: adaptive Rampe im Vergleich zum festen Vorlauf">
+        <!-- gridlines drawn by JS -->
+      </svg>
+      <figcaption>Zeitstrahl bis Buchungsstart. <span style="color:var(--accent)">Orange</span> = adaptive Rampe, <span style="color:var(--muted)">grau gestrichelt</span> = heutiger fester Vorlauf (60 min). Bei Kälte/kaltem Raum wandert der Heizstart nach links (früher).</figcaption>
+    </figure>
+  </div>
+
+  <div class="card">
+    <h2>Die Rechnung dahinter</h2>
+    <div class="formula">
+Vorlauf [min] = (T_ziel − T_innen) / Heizrate(T_außen)<br>
+Heizrate(T_außen) = r_ref − k · (T_ref − T_außen)      <span class="c">// °C pro Minute</span><br>
+<span class="c">// r_ref und k werden gelernt · Ergebnis begrenzt auf [min, max]</span>
+    </div>
+    <p class="hint" style="margin-top:14px;margin-bottom:0">
+      Kälter außen → kleinere Heizrate → <span class="badge vor">größerer Vorlauf · nach vorn</span> &nbsp;
+      Raum schon warm → kleiner (T_ziel − T_innen) → <span class="badge hin">kleiner Vorlauf · nach hinten</span>
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Datenfluss &amp; Selbstlernen</h2>
+    <p class="hint">Jede Buchung ist ein Lern-Datenpunkt: die echte Aufheizzeit korrigiert die Heizrate für die nächste Rampe.</p>
+    <figure>
+      <svg id="flow" viewBox="0 0 900 300" role="img" aria-label="Datenfluss von Sensoren über Berechnung zur Heizen-Variable, mit Lernschleife">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+          <marker id="ahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+          </marker>
+        </defs>
+
+        <!-- inputs -->
+        <g font-size="13" fill="currentColor" text-anchor="middle">
+          <rect x="20" y="20" width="150" height="40" rx="8" fill="none" stroke="var(--cool)"/>
+          <text x="95" y="45" fill="var(--cool)">T_innen · T_außen</text>
+
+          <rect x="20" y="80" width="150" height="40" rx="8" fill="none" stroke="currentColor"/>
+          <text x="95" y="105">Zieltemperatur</text>
+
+          <rect x="20" y="140" width="150" height="40" rx="8" fill="none" stroke="var(--accent)"/>
+          <text x="95" y="165" fill="var(--accent)">Modell r_ref, k</text>
+
+          <!-- compute -->
+          <rect x="270" y="70" width="180" height="60" rx="10" fill="var(--surface-2)" stroke="var(--border)"/>
+          <text x="360" y="95">Vorlauf berechnen</text>
+          <text x="360" y="114" font-size="11" fill="var(--muted)">+ clampen / Fallback</text>
+
+          <!-- output -->
+          <rect x="560" y="70" width="170" height="60" rx="10" fill="none" stroke="var(--good)"/>
+          <text x="645" y="95" fill="var(--good)">Variable „Heizen"</text>
+          <text x="645" y="114" font-size="11" fill="var(--muted)">Start − Vorlauf</text>
+
+          <!-- learning -->
+          <rect x="560" y="210" width="170" height="60" rx="10" fill="none" stroke="var(--accent)"/>
+          <text x="645" y="235" fill="var(--accent)">Aufheizzeit messen</text>
+          <text x="645" y="254" font-size="11" fill="var(--muted)">T_innen ≥ Ziel?</text>
+
+          <rect x="270" y="210" width="180" height="60" rx="10" fill="none" stroke="var(--accent)"/>
+          <text x="360" y="235" fill="var(--accent)">Modell korrigieren</text>
+          <text x="360" y="254" font-size="11" fill="var(--muted)">gleitender Mittelwert</text>
+        </g>
+
+        <!-- arrows -->
+        <g stroke="currentColor" stroke-width="1.6" fill="none">
+          <path d="M170,40 C220,40 230,90 268,95" marker-end="url(#ah)"/>
+          <path d="M170,100 L268,100" marker-end="url(#ah)"/>
+          <path d="M170,160 C220,160 230,112 268,108" marker-end="url(#ah)"/>
+          <path d="M450,100 L558,100" marker-end="url(#ah)"/>
+        </g>
+        <g stroke="var(--accent)" stroke-width="1.6" fill="none">
+          <path d="M645,130 L645,208" marker-end="url(#ahA)"/>
+          <path d="M558,240 L452,240" marker-end="url(#ahA)"/>
+          <path d="M360,208 C360,170 360,150 360,132" marker-end="url(#ahA)"/>
+        </g>
+      </svg>
+      <figcaption>Die <span style="color:var(--accent)">orange Schleife</span> ist das Neue: Nach jeder Buchung fließt die gemessene Aufheizzeit zurück ins Modell – die Rampe wird mit jeder Nutzung genauer.</figcaption>
+    </figure>
+  </div>
+
+  <div class="card">
+    <h2>Was gebaut wird (Kurzfassung)</h2>
+    <ul class="steps">
+      <li><strong>Neue Einstellungen</strong> pro Raum: Schalter „intelligente Rampe", Variablen für Innen-/Außentemperatur, Zieltemperatur, Min/Max-Vorlauf, Selbstlernen.</li>
+      <li><strong>Berechnung</strong> ersetzt den festen Vorlauf – fällt bei fehlenden Sensoren sicher auf den alten Festwert zurück.</li>
+      <li><strong>Lernspeicher</strong>: die letzten ~20 Aufheiz-Vorgänge + gelernte Heizrate, sichtbar im Konfigurationsdialog.</li>
+      <li>Alles bleibt in <code>CTRoomUsage</code> – Gateway und Protokoll unverändert.</li>
+    </ul>
+  </div>
+
+  <p class="foot">Konzept-Visualisierung · Werte im Regler-Modell sind illustrativ; die echten Parameter lernt das Modul im Betrieb.</p>
+</div>
+
+<script>
+(function(){
+  var R_REF = 0.15;     // °C/min bei Referenz-Außentemp
+  var T_REF = 20;       // Referenz-Außentemperatur
+  var K     = 0.004;    // Wetter-Empfindlichkeit
+  var RATE_MIN = 0.02;
+  var MINP = 5, MAXP = 240;
+  var FIXED = 60;       // heutiger fester Vorlauf
+
+  var out = document.getElementById('out');
+  var inn = document.getElementById('in');
+  var tgt = document.getElementById('tgt');
+
+  function rate(tOut){ return Math.max(RATE_MIN, R_REF - K*(T_REF - tOut)); }
+  function preheat(tOut, tIn, tTgt){
+    var d = Math.max(0, tTgt - tIn);
+    var m = d / rate(tOut);
+    return Math.max(MINP, Math.min(MAXP, Math.round(m)));
+  }
+
+  function drawTimeline(p){
+    var W=900,H=220, padL=20, padR=40, startX=padL, endX=W-padR;
+    var span = Math.max(MAXP, p, FIXED) * 1.1;       // minutes across the axis
+    var bookX = endX;                                 // booking start at right
+    function xFor(minBefore){ return bookX - (minBefore/span)*(bookX-startX); }
+
+    var svg = document.getElementById('timeline');
+    var ns='http://www.w3.org/2000/svg';
+    svg.innerHTML='';
+
+    // axis
+    var axisY=150;
+    var line=document.createElementNS(ns,'line');
+    line.setAttribute('x1',startX);line.setAttribute('x2',endX);line.setAttribute('y1',axisY);line.setAttribute('y2',axisY);
+    line.setAttribute('stroke','var(--border)');line.setAttribute('stroke-width','2');svg.appendChild(line);
+
+    // gridticks every 30 min
+    for(var m=0;m<=span;m+=30){
+      var gx=xFor(m);
+      var t=document.createElementNS(ns,'line');
+      t.setAttribute('x1',gx);t.setAttribute('x2',gx);t.setAttribute('y1',axisY-4);t.setAttribute('y2',axisY+4);
+      t.setAttribute('stroke','var(--grid)');t.setAttribute('stroke-width','1');svg.appendChild(t);
+      var lab=document.createElementNS(ns,'text');
+      lab.setAttribute('x',gx);lab.setAttribute('y',axisY+20);lab.setAttribute('text-anchor','middle');
+      lab.setAttribute('font-size','10');lab.setAttribute('fill','var(--muted)');
+      lab.textContent = m===0 ? 'Start' : '−'+m+'m';
+      svg.appendChild(lab);
+    }
+
+    // booking marker
+    var bm=document.createElementNS(ns,'line');
+    bm.setAttribute('x1',bookX);bm.setAttribute('x2',bookX);bm.setAttribute('y1',40);bm.setAttribute('y2',185);
+    bm.setAttribute('stroke','var(--good)');bm.setAttribute('stroke-width','2.5');svg.appendChild(bm);
+    var bl=document.createElementNS(ns,'text');
+    bl.setAttribute('x',bookX);bl.setAttribute('y',32);bl.setAttribute('text-anchor','end');
+    bl.setAttribute('font-size','12');bl.setAttribute('font-weight','700');bl.setAttribute('fill','var(--good)');
+    bl.textContent='Buchungsstart · Raum warm';svg.appendChild(bl);
+
+    // fixed ramp (dashed, thin) upper track
+    var fY=70, fH=16;
+    var fr=document.createElementNS(ns,'rect');
+    fr.setAttribute('x',xFor(FIXED));fr.setAttribute('y',fY);
+    fr.setAttribute('width',bookX-xFor(FIXED));fr.setAttribute('height',fH);
+    fr.setAttribute('rx',5);fr.setAttribute('fill','var(--track)');fr.setAttribute('opacity','0.5');
+    fr.setAttribute('stroke','var(--muted)');fr.setAttribute('stroke-dasharray','5 4');svg.appendChild(fr);
+    var ft=document.createElementNS(ns,'text');
+    ft.setAttribute('x',xFor(FIXED)-8);ft.setAttribute('y',fY+12);ft.setAttribute('text-anchor','end');
+    ft.setAttribute('font-size','11');ft.setAttribute('fill','var(--muted)');ft.textContent='fest 60m';svg.appendChild(ft);
+
+    // adaptive ramp (filled gradient-ish) lower track, thicker
+    var aY=100, aH=26;
+    var ar=document.createElementNS(ns,'rect');
+    ar.setAttribute('x',xFor(p));ar.setAttribute('y',aY);
+    ar.setAttribute('width',bookX-xFor(p));ar.setAttribute('height',aH);
+    ar.setAttribute('rx',6);ar.setAttribute('fill','var(--warm-fill)');
+    ar.setAttribute('stroke','var(--accent)');ar.setAttribute('stroke-width','2');svg.appendChild(ar);
+    var at=document.createElementNS(ns,'text');
+    at.setAttribute('x',xFor(p)-8);at.setAttribute('y',aY+18);at.setAttribute('text-anchor','end');
+    at.setAttribute('font-size','12');at.setAttribute('font-weight','700');at.setAttribute('fill','var(--accent)');
+    at.textContent='adaptiv '+p+'m';svg.appendChild(at);
+
+    // heat start dot
+    var dot=document.createElementNS(ns,'circle');
+    dot.setAttribute('cx',xFor(p));dot.setAttribute('cy',aY+aH/2);dot.setAttribute('r','5');
+    dot.setAttribute('fill','var(--accent)');svg.appendChild(dot);
+  }
+
+  function update(){
+    var tOut=+out.value, tIn=+inn.value, tTgt=+tgt.value;
+    document.getElementById('outV').textContent=tOut+' °C';
+    document.getElementById('inV').textContent=tIn+' °C';
+    document.getElementById('tgtV').textContent=tTgt+' °C';
+
+    var p=preheat(tOut,tIn,tTgt);
+    var r=rate(tOut);
+    document.getElementById('preheat').innerHTML=p+' <small>min</small>';
+    document.getElementById('rate').innerHTML=r.toFixed(3)+' <small>°C/min</small>';
+
+    var diff=p-FIXED;
+    var dirEl=document.getElementById('dir');
+    if(Math.abs(diff)<3){ dirEl.textContent='≈ gleich'; dirEl.style.color='var(--muted)'; }
+    else if(diff>0){ dirEl.innerHTML='+'+diff+'m <small>nach vorn</small>'; dirEl.style.color='var(--accent)'; }
+    else { dirEl.innerHTML=diff+'m <small>nach hinten</small>'; dirEl.style.color='var(--cool)'; }
+
+    drawTimeline(p);
+  }
+
+  [out,inn,tgt].forEach(function(el){ el.addEventListener('input',update); });
+  update();
+})();
+</script>
+</body>
+</html>
